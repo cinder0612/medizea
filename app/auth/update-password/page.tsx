@@ -2,18 +2,25 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import Link from 'next/link'
-import { toast } from "@/components/hooks/use-toast"
+import { supabase } from '@/utils/supabase'
+import { BaseLayout } from '@/components/layouts/base-layout'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { GradientBackground } from '@/components/shared/gradient-background'
 
 export default function UpdatePassword() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
   const router = useRouter()
-  const supabase = createClientComponentClient()
 
   useEffect(() => {
+    // Check if we have a session
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
@@ -26,13 +33,10 @@ export default function UpdatePassword() {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
 
     if (password !== confirmPassword) {
-      toast({
-        title: 'Error',
-        description: 'Passwords do not match',
-        variant: 'destructive',
-      })
+      setError('Passwords do not match')
       setIsLoading(false)
       return
     }
@@ -43,75 +47,113 @@ export default function UpdatePassword() {
       })
       if (error) throw error
       
-      toast({
-        title: 'Success',
-        description: 'Password updated successfully',
-      })
-      router.push('/auth')
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      })
+      // Show success message before redirecting
+      setSuccess(true)
+      
+      // Redirect after 2 seconds
+      setTimeout(() => {
+        router.push('/auth?mode=signin&message=Password successfully updated. Please sign in with your new password')
+      }, 2000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex flex-col items-center justify-center flex-1 w-full px-4">
-      <div className="w-full max-w-sm space-y-6">
-        <h2 className="text-2xl font-semibold text-white text-center">
-          Update your password
-        </h2>
+    <BaseLayout>
+      <div className="relative min-h-screen flex items-center justify-center">
+        <GradientBackground />
+        <div className="relative z-10 w-full max-w-md">
+          <div className="relative w-full max-w-[480px] p-12 bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-amber-500/10 to-transparent pointer-events-none" />
+            
+            <div className="relative z-10 space-y-8">
+              <div className="text-center space-y-2">
+                <h1 className="text-4xl font-light tracking-tight text-amber-400">
+                  Update Password
+                </h1>
+                <p className="text-lg text-amber-100/70">
+                  Enter your new password below
+                </p>
+              </div>
 
-        <form onSubmit={handleUpdatePassword} className="space-y-4">
-          <div className="space-y-4">
-            <div>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 bg-[#0A0A0A] border border-white/10 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                placeholder="New password"
-                required
-                minLength={6}
-              />
-            </div>
-            <div>
-              <input
-                type="password"
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2 bg-[#0A0A0A] border border-white/10 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                placeholder="Confirm new password"
-                required
-                minLength={6}
-              />
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+                  <p className="text-red-400">{error}</p>
+                </div>
+              )}
+
+              {success && (
+                <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+                  <p className="text-green-400">Password successfully updated! Redirecting to sign in...</p>
+                </div>
+              )}
+
+              <form onSubmit={handleUpdatePassword} className="space-y-6">
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="New password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full h-14 px-5 bg-white/5 border-white/10 rounded-xl text-lg text-amber-100 placeholder:text-amber-100/50 focus:border-amber-400/50 focus:ring-amber-400/50 pr-12"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-amber-100/50 hover:text-amber-100"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full h-14 px-5 bg-white/5 border-white/10 rounded-xl text-lg text-amber-100 placeholder:text-amber-100/50 focus:border-amber-400/50 focus:ring-amber-400/50 pr-12"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-amber-100/50 hover:text-amber-100"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-14 bg-gradient-to-r from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-black font-medium rounded-xl shadow-lg transition-all duration-300 ease-in-out transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                  ) : (
+                    'Update Password'
+                  )}
+                </Button>
+              </form>
             </div>
           </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-2 px-4 bg-amber-500 text-black rounded-lg font-medium hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50 transition-colors"
-          >
-            {isLoading ? 'Updating...' : 'Update Password'}
-          </button>
-
-          <div className="text-center">
-            <Link
-              href="/auth"
-              className="text-amber-500 hover:text-amber-400 text-sm font-medium"
-            >
-              Back to sign in
-            </Link>
-          </div>
-        </form>
+        </div>
       </div>
-    </div>
+    </BaseLayout>
   )
 }

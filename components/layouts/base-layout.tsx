@@ -1,57 +1,48 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ParticleBackground } from "@/components/particle-background"
-import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from "@/components/ui/toaster"
-import { Navbar } from "@/components/navbar"
-import { AuthRedirectHandler } from '@/components/auth/auth-redirect-handler'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import Head from 'next/head'
 
 interface BaseLayoutProps {
   children: React.ReactNode
-  showParticles?: boolean
   className?: string
+  title?: string
+  hideVideo?: boolean
 }
 
-export function BaseLayout({ children, showParticles = true, className = "" }: BaseLayoutProps) {
+export function BaseLayout({ children, className = "", title, hideVideo }: BaseLayoutProps) {
   const [mounted, setMounted] = useState(false)
-  const supabase = createClientComponentClient()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  if (!mounted) {
-    return null
-  }
-
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key="layout"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="min-h-screen bg-black"
-      >
-        {showParticles && (
-          <div className="fixed inset-0 z-0">
-            <ParticleBackground />
-          </div>
-        )}
-        
-        <div className="relative min-h-screen flex flex-col">
-          <div className="z-50">
-            <Navbar />
-          </div>
-          <main className={`relative z-10 flex-grow ${className}`}>
-            <AuthRedirectHandler initialSession={null} />
-            {children}
-          </main>
-          <Toaster />
+    <div className="relative min-h-screen bg-black">
+      {/* Video Background - only show if hideVideo is false */}
+      {!hideVideo && (
+        <div className="fixed inset-0 z-0">
+          <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-50"
+          >
+            <source src="/videos/meditation.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/60" />
         </div>
-      </motion.div>
-    </AnimatePresence>
+      )}
+
+      <Head>
+        <title>{title ? `${title} - Medizea` : 'Medizea - AI-Powered Meditation'}</title>
+      </Head>
+      <div className={`relative z-10 ${className}`}>
+        {mounted && children}
+      </div>
+      <Toaster />
+    </div>
   )
 }

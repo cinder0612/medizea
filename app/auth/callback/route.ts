@@ -1,39 +1,36 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import type { Database } from '@/types/supabase'
-
-// Force dynamic rendering for this route
-export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
-  const requestUrl = new URL(request.url) // Moved outside the try block
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get('code')
+  const error = requestUrl.searchParams.get('error')
+  const error_description = requestUrl.searchParams.get('error_description')
 
-  try {
-    const code = requestUrl.searchParams.get('code')
-
-    if (!code) {
-      return NextResponse.redirect(new URL('/auth?error=missing_code', requestUrl.origin))
-    }
-
-    const supabase = createRouteHandlerClient<Database>({ cookies })
-
-    // Exchange the code for a session
-    const { error, data } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (error) {
-      console.error('Auth callback error:', error)
-      return NextResponse.redirect(new URL(`/auth?error=${error.message}`, requestUrl.origin))
-    }
-
-    // Get the redirect URL from the 'next' parameter
-    const next = requestUrl.searchParams.get('next') || '/dashboard'
-
-    // Successful authentication, redirect to the intended page
-    return NextResponse.redirect(new URL(next, requestUrl.origin))
-  } catch (error) {
-    console.error('Unexpected error in auth callback:', error)
-    return NextResponse.redirect(new URL('/auth?error=server_error', requestUrl.origin))
+  // Handle error from Supabase
+  if (error) {
+    console.error('Auth error:', error, error_description)
+    return NextResponse.redirect(
+      new URL(`/auth?mode=signin&error=${encodeURIComponent(error_description || error)}`, requestUrl.origin)
+    )
   }
-}
 
+  if (code) {
+    const cookieStore = cookies()
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    
+    try {
+      await supabase.auth.exchangeCodeForSession(code)
+      return NextResponse.redirect(new URL('/auth/update-password', requestUrl.origin))
+    } catch (error) {
+      console.error('Error:', error)
+      return NextResponse.redirect(
+        new URL('/auth?mode=signin&error=Failed to exchange code for session', requestUrl.origin)
+      )
+    }
+  }
+
+  // Return to auth page if no code or error
+  return NextResponse.redirect(new URL('/auth?mode=signin', requestUrl.origin))
+}

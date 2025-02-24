@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from "react"
-import { Play, Pause, Volume2, MoreVertical } from 'lucide-react'
+import { Play, Pause, Volume2, MoreVertical, Square } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -35,6 +35,16 @@ export function AudioPlayer({ src, onPlay, onPause }: AudioPlayerProps) {
     }
   }
 
+  const handleStop = () => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+      setCurrentTime(0)
+      setPlaying(false)
+      onPause?.()
+    }
+  }
+
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime)
@@ -64,23 +74,23 @@ export function AudioPlayer({ src, onPlay, onPause }: AudioPlayerProps) {
   const progress = duration ? (currentTime / duration) * 100 : 0
 
   return (
-    <div className="w-full bg-white rounded-full shadow-lg p-2 flex items-center gap-4">
+    <div className="w-full bg-black/30 border border-amber-500/20 rounded-full shadow-lg p-4 flex items-center gap-4">
       <Button
         variant="ghost"
         size="icon"
         onClick={togglePlay}
-        className="h-8 w-8 text-black hover:bg-black/5"
+        className="h-8 w-8 text-amber-400 hover:bg-amber-500/10 transition-colors"
         aria-label={playing ? 'Pause' : 'Play'}
       >
         {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
       </Button>
 
-      <div className="text-sm text-black min-w-[80px]">
+      <div className="text-sm text-amber-400 min-w-[80px] font-light">
         {formatTime(currentTime)} / {formatTime(duration)}
       </div>
 
       <div 
-        className="relative flex-1 h-1 bg-black/10 rounded-full cursor-pointer"
+        className="relative flex-1 h-1.5 bg-amber-500/10 rounded-full cursor-pointer group"
         onClick={handleProgressClick}
         role="progressbar"
         aria-valuemin={0}
@@ -88,7 +98,7 @@ export function AudioPlayer({ src, onPlay, onPause }: AudioPlayerProps) {
         aria-valuenow={progress}
       >
         <div 
-          className="absolute left-0 top-0 h-full bg-black/25 rounded-full transition-all duration-100"
+          className="absolute left-0 top-0 h-full bg-amber-500/30 rounded-full transition-all duration-100 group-hover:bg-amber-500/40"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -96,7 +106,17 @@ export function AudioPlayer({ src, onPlay, onPause }: AudioPlayerProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-black hover:bg-black/5"
+        onClick={handleStop}
+        className="h-8 w-8 text-amber-400 hover:bg-amber-500/10 transition-colors"
+        aria-label="Stop"
+      >
+        <Square className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-amber-400 hover:bg-amber-500/10 transition-colors"
         aria-label="Volume"
       >
         <Volume2 className="h-4 w-4" />
@@ -107,14 +127,17 @@ export function AudioPlayer({ src, onPlay, onPause }: AudioPlayerProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-black hover:bg-black/5"
+            className="h-8 w-8 text-amber-400 hover:bg-amber-500/10 transition-colors"
             aria-label="More options"
           >
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => window.open(src, '_blank')}>
+        <DropdownMenuContent align="end" className="bg-black/90 border-amber-500/20">
+          <DropdownMenuItem 
+            onClick={() => window.open(src, '_blank')}
+            className="text-amber-400 focus:bg-amber-500/10 focus:text-amber-300"
+          >
             Download
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -130,4 +153,3 @@ export function AudioPlayer({ src, onPlay, onPause }: AudioPlayerProps) {
     </div>
   )
 }
-

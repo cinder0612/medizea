@@ -12,6 +12,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2023-08-16',
 })
 
+// Valid price IDs for subscription plans
+const VALID_PRICE_IDS = [
+  'price_1QeLn1IfIBf9ivekghK86k8N',  // Basic plan
+  'price_1QeLoMIfIBf9ivekW9TQeFyt',  // Pro plan
+  'price_1QeLpLIfIBf9ivekvP58R4d6'   // Premium plan
+]
+
 export async function POST(req: Request) {
   try {
     const { priceId } = await req.json()
@@ -22,6 +29,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Price ID is required' }, { status: 400 })
     }
 
+    // Validate price ID format
+    if (!VALID_PRICE_IDS.includes(priceId)) {
+      console.error('API: Invalid price ID format:', priceId)
+      return NextResponse.json({ error: 'Invalid Price ID format' }, { status: 400 })
+    }
+
     // Verify price exists in Stripe
     let price;
     try {
@@ -30,7 +43,10 @@ export async function POST(req: Request) {
       console.log('API: Retrieved price:', price.id)
     } catch (error) {
       console.error('API: Error retrieving price from Stripe:', error)
-      return NextResponse.json({ error: 'Invalid Price ID' }, { status: 400 })
+      return NextResponse.json({ 
+        error: 'Invalid Price ID or Stripe error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 400 })
     }
 
     // Get user session
@@ -102,24 +118,56 @@ export async function POST(req: Request) {
       customerId = customerData.stripe_customer_id
     }
 
+    // Get current subscription if exists
+    const { data: currentSub } = await supabaseAdmin
+      .from('user_subscriptions')
+      .select('subscription_tier, current_period_end, minutes_per_month, credits_per_month')
+      .eq('user_id', userId)
+      .single();
+
     // Create Stripe checkout session
-    console.log('API: Creating checkout session')
+    console.log('API: Creating checkout session with:', {
+      customerId,
+      priceId,
+      userId,
+      successUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?success=true`,
+      cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard`
+    });
+
+    // Check if this is a credit purchase
+    const isCreditPurchase = [
+      'price_1QeLxDIfIBf9ivekXzPPzWdJ',  // 105 credits
+      'price_1QeLzJIfIBf9iveksuGECwBc',  // 320 credits
+      'price_1QeM0xIfIBf9ivekkIcojhow',  // 550 credits
+      'price_1QeM3gIfIBf9ivekcnA1qkSx',  // 1150 credits
+      'price_1QeM5eIfIBf9ivekvb8ZvDAI'   // 6000 credits
+    ].includes(priceId);
+
     const session = await stripe.checkout.sessions.create({
+      billing_address_collection: 'auto',
       customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: 'subscription',
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      mode: isCreditPurchase ? 'payment' : 'subscription',
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?canceled=true`,
       metadata: {
         userId,
-        priceId
+        priceId,
+        type: isCreditPurchase ? 'credit_purchase' : 'subscription'
       },
       subscription_data: {
         metadata: {
           userId,
-          priceId
-        }
-      }
+          currentMinutes: currentSub?.minutes_per_month || 0,
+          currentCredits: currentSub?.credits_per_month || 0,
+          currentPeriodEnd: currentSub?.current_period_end || '',
+        },
+      },
     })
 
     if (!session.url) {
@@ -132,7 +180,10 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('API: Checkout session error:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { 
+        error: 'Failed to create checkout session',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }

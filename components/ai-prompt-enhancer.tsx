@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/ui/use-toast"
+import { EnhanceIcon } from "./icons/enhance-icon"
 import { Loader2 } from 'lucide-react'
-import { EnhanceIcon } from "@/components/icons/enhance-icon"
 import {
   Tooltip,
   TooltipContent,
@@ -19,29 +19,27 @@ interface AIPromptEnhancerProps {
 }
 
 export function AIPromptEnhancer({ meditationPrompt, musicPrompt, onEnhancedPrompts }: AIPromptEnhancerProps) {
-  const [isEnhancing, setIsEnhancing] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const enhancePrompts = async () => {
-    if (!meditationPrompt.trim() && !musicPrompt.trim()) {
+    if (!meditationPrompt && !musicPrompt) {
       toast({
-        title: "No prompts to enhance",
-        description: "Please enter at least one prompt.",
+        title: "Error",
+        description: "Please enter at least one prompt to enhance",
         variant: "destructive",
       })
       return
     }
 
-    setIsEnhancing(true)
+    setIsLoading(true)
+
     try {
       const response = await fetch('/api/enhance-prompt', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          meditationPrompt: meditationPrompt.trim(),
-          musicPrompt: musicPrompt.trim()
-        }),
+        body: JSON.stringify({ meditationPrompt, musicPrompt }),
       })
 
       const data = await response.json()
@@ -50,28 +48,24 @@ export function AIPromptEnhancer({ meditationPrompt, musicPrompt, onEnhancedProm
         throw new Error(data.error || 'Failed to enhance prompts')
       }
 
-      if (!data.success) {
-        throw new Error('No content received from server')
-      }
-
       onEnhancedPrompts(
-        data.meditationPrompt || meditationPrompt,
-        data.musicPrompt || musicPrompt
+        data.enhancedMeditationPrompt || meditationPrompt,
+        data.enhancedMusicPrompt || musicPrompt
       )
 
       toast({
-        title: "Prompts enhanced",
-        description: "Your prompts have been enhanced.",
+        title: "Success",
+        description: "Prompts enhanced successfully",
       })
     } catch (error) {
-      console.error('Error in enhancePrompts:', error)
+      console.error('Error enhancing prompts:', error)
       toast({
-        title: "Enhancement failed",
-        description: "Please try again.",
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to enhance prompts',
         variant: "destructive",
       })
     } finally {
-      setIsEnhancing(false)
+      setIsLoading(false)
     }
   }
 
@@ -85,9 +79,9 @@ export function AIPromptEnhancer({ meditationPrompt, musicPrompt, onEnhancedProm
             size="icon"
             className="absolute -right-12 top-1/2 -translate-y-1/2 text-amber-400 hover:text-amber-300 hover:bg-amber-900/20"
             onClick={enhancePrompts}
-            disabled={isEnhancing || (!meditationPrompt.trim() && !musicPrompt.trim())}
+            disabled={isLoading || (!meditationPrompt && !musicPrompt)}
           >
-            {isEnhancing ? (
+            {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
               <EnhanceIcon className="h-5 w-5" />

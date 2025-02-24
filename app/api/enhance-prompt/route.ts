@@ -1,13 +1,19 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
+// Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
 export async function POST(req: Request) {
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json(
+      { error: 'OpenAI API key not configured' },
+      { status: 500 }
+    )
+  }
+
   try {
     const { meditationPrompt, musicPrompt } = await req.json()
 
@@ -18,67 +24,55 @@ export async function POST(req: Request) {
       )
     }
 
-    const enhancePrompt = async (prompt: string, type: 'meditation' | 'music') => {
-      const systemPrompt = type === 'meditation'
-        ? 'You are an expert meditation guide. Given a simple theme or emotion, create exactly 3 unique lines that expand on that theme. Each line should be different but related to the theme. Do not repeat the original word. Example for "peace": "Let tranquility wash over you", "Find serenity in the moment", "Rest in perfect stillness".'
-        : 'You are a professional music composer. Given a simple theme or emotion, create exactly 3 unique lines describing the musical atmosphere. Each line should be different but related to the theme. Do not repeat the original word. Example for "gentle": "Soft piano notes floating in air", "Delicate strings whispering melodies", "Light chimes dancing with breeze".'
+    let enhancedMeditationPrompt = meditationPrompt
+    let enhancedMusicPrompt = musicPrompt
 
-      const userPrompt = type === 'meditation'
-        ? `Create 3 unique meditation lines based on this theme: "${prompt}". Remember, do not repeat the original word.`
-        : `Create 3 unique musical atmosphere lines based on this theme: "${prompt}". Remember, do not repeat the original word.`
-
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4',
+    if (meditationPrompt) {
+      const meditationCompletion = await openai.chat.completions.create({
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
+          {
+            role: "system",
+            content: "You are a meditation expert. Enhance the given meditation prompt to be more detailed and relaxing, while keeping the same theme and core meaning. Keep the response concise (max 2-3 sentences)."
+          },
+          {
+            role: "user",
+            content: meditationPrompt
+          }
         ],
-        temperature: 0.7,
-        max_tokens: 60,
-        frequency_penalty: 1.0,
-        presence_penalty: 1.0,
+        model: "gpt-3.5-turbo",
       })
 
-      const content = completion.choices[0]?.message?.content || ''
-      let lines = content.split('\n').filter(line => line.trim())
-      
-      if (lines.length < 3) {
-        const variations = type === 'meditation'
-          ? [
-              `Let ${prompt}ness envelop your being`,
-              `Find deep ${prompt}ness within`,
-              `Rest in perfect ${prompt}ness`
-            ]
-          : [
-              `Soft ${prompt} melodies flow`,
-              `Gentle ${prompt} rhythms sway`,
-              `Peaceful ${prompt} harmonies blend`
-            ]
-        
-        while (lines.length < 3) {
-          lines.push(variations[lines.length])
-        }
-      }
-      
-      return lines.slice(0, 3).join('\n')
+      enhancedMeditationPrompt = meditationCompletion.choices[0]?.message?.content || meditationPrompt
     }
 
-    const results = await Promise.all([
-      meditationPrompt ? enhancePrompt(meditationPrompt, 'meditation') : Promise.resolve(meditationPrompt),
-      musicPrompt ? enhancePrompt(musicPrompt, 'music') : Promise.resolve(musicPrompt)
-    ])
+    if (musicPrompt) {
+      const musicCompletion = await openai.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: "You are a music expert. Enhance the given music prompt to be more detailed and atmospheric, while keeping the same theme and core meaning. Keep the response concise (max 2-3 sentences)."
+          },
+          {
+            role: "user",
+            content: musicPrompt
+          }
+        ],
+        model: "gpt-3.5-turbo",
+      })
+
+      enhancedMusicPrompt = musicCompletion.choices[0]?.message?.content || musicPrompt
+    }
 
     return NextResponse.json({
-      success: true,
-      meditationPrompt: results[0],
-      musicPrompt: results[1]
+      enhancedMeditationPrompt,
+      enhancedMusicPrompt
     })
-  } catch (error) {
+
+  } catch (error: any) {
     console.error('Error in enhance-prompt:', error)
     return NextResponse.json(
-      { error: 'Failed to enhance prompts' },
+      { error: error.message || 'Failed to enhance prompts' },
       { status: 500 }
     )
   }
 }
-

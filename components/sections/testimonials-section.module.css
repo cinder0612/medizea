@@ -1,0 +1,57 @@
+.testimonialSection {
+  width: 100%;
+  overflow: hidden;
+  padding: 4rem 0;
+  background: transparent; /* Remove gradient and image */
+}
+
+.scrollContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  position: relative;
+}
+
+.scrollTrack {
+  display: flex;
+  gap: 2rem;
+  overflow-x: hidden;
+  width: 100%;
+  padding: 1rem 0;
+}
+
+.scrollTrack:nth-child(1) .testimonialBox {
+  background: rgba(255, 165, 0, 0.03);
+  border: 1px solid rgba(255, 165, 0, 0.15);
+}
+
+.scrollTrack:nth-child(2) .testimonialBox {
+  background: rgba(138, 43, 226, 0.03);
+  border: 1px solid rgba(138, 43, 226, 0.15);
+}
+
+.testimonialBox {
+  flex: 0 0 auto;
+  min-width: 400px;
+  padding: 1.5rem;
+  border-radius: 12px;
+  backdrop-filter: blur(4px); /* Restored original blur */
+  transition: all 0.3s ease;
+}
+
+.testimonialBox:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.testimonialBox > div {
+  background: transparent;
+  width: 100%;
+  height: 100%;
+}
+
+/* Optional: Pause animation on hover */
+.scrollTrack:hover {
+  animation-play-state: paused;
+} 

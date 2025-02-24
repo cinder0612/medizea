@@ -1,33 +1,32 @@
-import { BaseLayout } from '@/components/base-layout'
+import { BaseLayout } from '@/components/layouts/base-layout'
 
 export default function AboutPage() {
   return (
     <BaseLayout>
-      <div className="container mx-auto px-4 py-16">
-        <h1 className="text-4xl font-thin text-amber-200 mb-8">About Calm</h1>
-        <div className="prose prose-invert prose-amber">
-          <p>
-            Calm is an innovative AI-powered meditation app designed to help you find inner peace and tranquility in your busy life. Our platform uses advanced artificial intelligence to create personalized meditation experiences tailored to your unique needs and preferences.
-          </p>
-          <h2>Our Mission</h2>
-          <p>
-            At Calm, our mission is to make meditation accessible and effective for everyone. We believe that by combining the ancient wisdom of meditation with cutting-edge AI technology, we can help people reduce stress, improve focus, and enhance overall well-being.
-          </p>
-          <h2>How It Works</h2>
-          <p>
-            Our AI-driven platform analyzes your preferences, stress levels, and meditation goals to generate custom-tailored meditation sessions. Whether you're a beginner or an experienced practitioner, Calm adapts to your needs, providing a truly personalized meditation journey.
-          </p>
-          <h2>Features</h2>
-          <ul>
-            <li>AI-generated personalized meditations</li>
-            <li>High-quality audio experiences</li>
-            <li>Progress tracking and insights</li>
-            <li>Flexible session durations</li>
-            <li>Guided and unguided meditation options</li>
-          </ul>
-          <p>
-            Start your journey to inner peace today with Calm. Let our AI guide you to a more balanced, focused, and relaxed state of mind.
-          </p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="max-w-3xl mx-auto px-4 py-16 text-center">
+          <h1 className="text-5xl font-bold text-amber-200 mb-12">About MindfulAI</h1>
+          <div className="space-y-12">
+            <div>
+              <p className="text-xl text-amber-100/80 leading-relaxed">
+                MindfulAI is your personal AI-powered meditation companion, designed to help you find peace and mindfulness in your daily life.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="text-3xl font-semibold text-amber-200 mb-6">Our Mission</h2>
+              <p className="text-xl text-amber-100/80 leading-relaxed">
+                We believe that everyone deserves access to personalized meditation experiences that adapt to their unique needs and preferences.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="text-3xl font-semibold text-amber-200 mb-6">How It Works</h2>
+              <p className="text-xl text-amber-100/80 leading-relaxed">
+                Using advanced AI technology, MindfulAI creates customized meditation sessions that evolve with your practice, helping you achieve deeper states of relaxation and mindfulness.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </BaseLayout>
