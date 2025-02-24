@@ -55,3 +55,14 @@ A modern meditation app built with Next.js, featuring AI-powered meditation gene
 ## License
 
 MIT
+
+## Environment Setup
+
+1. Copy `.env.example` to `.env.local`
+2. Fill in your API keys:
+   - Supabase credentials
+   - OpenAI API key
+   - Stripe keys
+   - Unsplash access key
+
+⚠️ Never commit your actual `.env.local` file or API keys to GitHub!
