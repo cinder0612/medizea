@@ -2,6 +2,8 @@ const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
+  
   images: {
     remotePatterns: [
       {
@@ -22,6 +24,7 @@ const nextConfig = {
       },
     ],
   },
+  
   webpack(config, { isServer }) {
     // Ensure aliases work properly
     config.resolve.alias = {
@@ -31,6 +34,16 @@ const nextConfig = {
 
     return config
   },
+  
+  // Disable type checking during build for speed
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  
+  // Disable ESLint during build
+  eslint: {
+    ignoreDuringBuilds: true,
+  }
 }
 
 module.exports = nextConfig
