@@ -4,10 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "DISABLE_ESLINT_PLUGIN=true NEXT_BUNDLE_ESLINT=false NEXT_TELEMETRY_DISABLED=1 next build || next build",
     "start": "next start",
-    "lint": "next lint",
-    "deploy": "DISABLE_ESLINT_PLUGIN=true next build"
+    "lint": "next lint"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.2",
