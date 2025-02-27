@@ -20,7 +20,7 @@ const nextConfig = {
       },
     ],
   },
-  webpack(config) {
+  webpack(config, { isServer }) {
     config.module.rules.push({
       test: /\.(png|jpe?g|gif|svg)$/i,
       use: [
@@ -33,6 +33,12 @@ const nextConfig = {
         },
       ],
     })
+
+    // Ensure aliases work properly
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname, './')
+    };
 
     return config
   },
