@@ -1,1 +1,11 @@
- 
+[build]
+  command = "bash ./build.sh"
+  publish = ".next"
+
+[build.environment]
+  NEXT_BUNDLE_ESLINT = "false"
+  ESLINT_SKIP_CHECKING = "true"
+  DISABLE_ESLINT_PLUGIN = "true"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs" 
