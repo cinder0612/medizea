@@ -13,7 +13,6 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'i.ibb.co',
       },
-      // Add other patterns as needed
     ],
   },
   experimental: {

@@ -1,9 +1,5 @@
-const path = require('path');
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
-  
   images: {
     remotePatterns: [
       {
@@ -24,26 +20,22 @@ const nextConfig = {
       },
     ],
   },
-  
-  webpack(config, { isServer }) {
-    // Ensure aliases work properly
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@': path.resolve(__dirname, './')
-    };
+  webpack(config) {
+    config.module.rules.push({
+      test: /\.(png|jpe?g|gif|svg)$/i,
+      use: [
+        {
+          loader: 'file-loader',
+          options: {
+            publicPath: '/_next',
+            name: 'static/media/[name].[hash].[ext]',
+          },
+        },
+      ],
+    })
 
     return config
   },
-  
-  // Disable type checking during build for speed
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  
-  // Disable ESLint during build
-  eslint: {
-    ignoreDuringBuilds: true,
-  }
 }
 
 module.exports = nextConfig

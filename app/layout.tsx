@@ -7,9 +7,11 @@ import { AuthProvider } from '@/components/providers/AuthProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
-  title: 'Calm - AI-Powered Meditation',
-  description: 'Experience personalized meditation with AI guidance',
+  title: 'Medizea',
+  description: 'AI-Powered Meditation Platform',
 }
 
 export default function RootLayout({
